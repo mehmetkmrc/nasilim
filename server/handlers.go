@@ -29,64 +29,75 @@ type loginResponse struct {
 	User        User `json:"user"`
 }
 
-func (server *Server) login(c *fiber.Ctx){
+func (server *Server) login(c fiber.Ctx) error{
 	var req loginRequest
-	if err := (*c).BodyParser(&req); err != nil {
+	if err := c.JSON(&req); err != nil{
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
+	
 
-	for _, user := range users{
+	for _, user := range users {
 		if user.Username == req.Username {
 			if user.Password == req.Password{
 				accessToken, err := server.tokenMaker.CreateToken(req.Username, time.Minute)
 			if err != nil {
-				return (*c).Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+				return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 			}
 			rsp := loginResponse{
 				AccessToken: accessToken,
 				User: user,
 			}
-			return (*c).Status(http.StatusOK).JSON(rsp)
+			return c.Status(http.StatusOK).JSON(rsp)
 			}
-			return (*c).Status(http.StatusForbidden).JSON(fiber.Map{"error":"Incorrect password"})
+			return c.Status(http.StatusForbidden).JSON(fiber.Map{"error":"Incorrect password"})
 		}
 	}
-	return (*c).Status(http.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
-}
+	return c.Status(http.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
 
+}
 type createUserRequest struct{
 	Username string `json:"username" binding:"required"`
 	Email	 string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-func (server *Server) createUser(c *fiber.Ctx){
+func (server *Server) createUser(c fiber.Ctx) error{
 	var user User
 
-	if err := (*c).BodyParser(&user); err !=nil{
-		return (*c).Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	if err := c.JSON(&user); err !=nil{
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	id, _ := rand.Int(rand.Reader, big.NewInt(1000))
 	user.ID = strconv.Itoa(int(id.Int64()))
 	users = append(users, user)
 
-	return (*c).Status(http.StatusOK).JSON(users)
+	return c.Status(http.StatusOK).JSON(users)
 }
 
 type deleteUserRequest struct{
 	ID string `params:"id" validate:"required"`
 }
 
-func (server *Server) deleteUser(c *fiber.Ctx) error{
-	id := (*c).Params("id")
+func (server *Server) deleteUser(c fiber.Ctx) error{
+	id := c.Params("id")
 
 	
 	for idx, user := range users {
 		if user.ID == id{
 			users = append(users[:idx], users[idx+1:]... )
-			return (*c).Status(http.StatusOK).JSON(users)
+			return c.Status(http.StatusOK).JSON(users)
 		}
 	}
-	return (*c).Status(http.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
+	return c.Status(http.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
 }
 
+func (server *Server) setRoutes(){
+		router := fiber.New()
+
+		auth := router.Group("/").Use(authMiddleware(*server.tokenMaker))
+		auth.Delete("/delete/:id", server.deleteUser)
+		router.Post("/create", server.createUser)
+		router.Post("/login", server.login)
+
+		server.router = router 
+	}

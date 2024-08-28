@@ -9,7 +9,8 @@ import (
 
 type Server struct {
 	tokenMaker *token.PasetoMaker
-	router		*fiber.Route}
+	router		*fiber.App
+}
 
 
 	func NewServer(address string) (*Server, error) {
@@ -23,19 +24,10 @@ type Server struct {
 		}
 
 		server.setRoutes()
-		server.router.Run(address)
+		server.router.Listen(address)
 
 		return server, nil
 
 	}
 
-	func (server *Server) setRoutes(){
-		router := fiber.New()
-
-		auth := router.Group("/").Use(authMiddleware(*server.tokenMaker))
-		auth.Delete("/delete/:id", server.deleteUser())
-		router.Post("/create", server.createUser)
-		router.Post("/login", server.login)
-
-		server.router = router 
-	}
+	
