@@ -4,12 +4,13 @@ import (
 	"errors"
 
 	"github.com/mehmetkmrc/nasilim.git/internal/core/domain/model"
-	"github.com/mehmetkmrc/nasilim.git/internal/core/port/db"
+	
+	"github.com/mehmetkmrc/nasilim.git/internal/core/port/user"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
-	UserRepo db.UserRepository
+	UserRepo user.UserRepository
 }
 
 

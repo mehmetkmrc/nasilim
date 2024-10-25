@@ -12,7 +12,7 @@ type UserHandler struct {
 }
 
 
-func (h *UserHandler) Signup(c fiber.Ctx) error{
+func (s *UserHandler) Signup(c fiber.Ctx) error{
 	var req dto.SignupRequest
 
 	if err := c.Bind().Body(req) ; err != nil{
@@ -24,7 +24,7 @@ func (h *UserHandler) Signup(c fiber.Ctx) error{
 		FirstName: req.FirstName,
 		BirthDate: req.BirthDate,
 	}
-	if err := h.UserService.Signup(user); err != nil{
+	if err := s.UserService.Signup(user); err != nil{
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error":err.Error()})
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "user created successfully"})

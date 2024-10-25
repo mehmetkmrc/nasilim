@@ -1,4 +1,4 @@
-package db
+package user
 
 import "github.com/mehmetkmrc/nasilim.git/internal/core/domain/model"
 
